@@ -7,16 +7,15 @@ import numpy as np
 
 
 class PTE(object):
-
     '''
     Defines the PTE model (cost function, parameters in theano.
     '''
-
     def __init__(self, nvertex, out_dim, ndocs, nlabels, lr):
         '''
         Parameters specs:
             nvertex : no of vertices in the graph
             out_dim : node vector dimension
+            ndocs : number of documents in the corpus
             nlabels : number of labels
             lr : learning rate.
         '''
