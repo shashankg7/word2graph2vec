@@ -5,18 +5,20 @@ from nltk.corpus import movie_reviews
 from nltk.probability import FreqDist
 from nltk.corpus import stopwords
 import string
-import os, sys, re
-from apgl.graph import SparseGraph
-import numpy
-import json 
+import os
+import sys
+import re
+import json
 import nltk
 path = '../data'
 
 
 class gen_graphs(object):
+
     '''
     class that generates word-word, word-label and word-document graph from text
     '''
+
     def __init__(self):
         '''
         Initialize each graph
@@ -30,14 +32,14 @@ class gen_graphs(object):
         self.all_documents = {}
         nltk.data.path.append(path)
 
-    def contruct_graphs(self,args):
+    def contruct_graphs(self, args):
         '''
         Function to read text file from path and construct the corresponding
         graphs.
         '''
-        documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation ), category,fileid)
-        for category in movie_reviews.categories()
-        for fileid in movie_reviews.fileids(category)]
+        documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation), category, fileid)
+                     for category in movie_reviews.categories()
+                     for fileid in movie_reviews.fileids(category)]
 
         unique_count = 0
         for index in range(len(documents)):
@@ -57,52 +59,61 @@ class gen_graphs(object):
                 unique_count = unique_count + 1
         print unique_count
 
-        window_size = 6
+        window_size = 10
 
         for index in range(len(documents)):
             for word_index in range(len(documents[index][0])):
                 word = documents[index][0][word_index]
-                if (word_index - window_size/2) >= 0:
-                    left = word_index - window_size/2
+                if (word_index - window_size / 2) >= 0:
+                    left = word_index - window_size / 2
                 else:
                     left = 0
-                if (word_index + window_size/2) < len(documents[index][0]):
-                    right = word_index +  window_size/2 + 1
+                if (word_index + window_size / 2) < len(documents[index][0]):
+                    right = word_index + window_size / 2 + 1
                 else:
                     right = len(documents[index][0])
 
-                for i in xrange(left,word_index):
+                for i in xrange(left, word_index):
                     u = self.all_words[word]
                     v = self.all_words[documents[index][0][i]]
-                    if (u,v) not in self.w2w and (v,u) not in self.w2w:
-                        self.w2w[(u,v)] = 1
-                    elif (u,v) not in self.w2w:
-                        self.w2w[(v,u)] += 1
+                    if (u, v) not in self.w2w and (v, u) not in self.w2w:
+                        self.w2w[(u, v)] = 1
+                        self.w2w[(v, u)] = 1
                     else:
-                        self.w2w[(u,v)] +=  1
-                    
-                for i in xrange(word_index+1, right):
+                        self.w2w[(u, v)] += 1
+                        self.w2w[(v, u)] += 1
+
+                for i in xrange(word_index + 1, right):
                     u = self.all_words[word]
                     v = self.all_words[documents[index][0][i]]
-                    if (u,v) not in self.w2w and (v,u) not in self.w2w:
-                        self.w2w[(u,v)] = 1
-                    elif (u,v) not in self.w2w:
-                        self.w2w[(v,u)] += 1
+                    if (u, v) not in self.w2w and (v, u) not in self.w2w:
+                        self.w2w[(u, v)] = 1
+                        self.w2w[(v, u)] = 1
                     else:
-                        self.w2w[(u,v)] +=  1
+                        self.w2w[(u, v)] += 1
+                        self.w2w[(v, u)] += 1
                 u = self.all_documents[documents[index][2]]
                 v = self.all_words[word]
-                if (u,v) not in self.w2d:
-                    self.w2d[(u,v)] = 1
+                if (u, v) not in self.w2d:
+                    self.w2d[(u, v)] = 1
+                    self.w2d[(v, u)] = 1
                 else:
-                    self.w2d[(u,v)] += 1
+                    self.w2d[(u, v)] += 1
+                    self.w2d[(v, u)] += 1
 
                 u = self.all_labels[documents[index][1]]
-                if (u,v) not in self.w2l:
-                    self.w2l[(u,v)] = 1
+                if (u, v) not in self.w2l:
+                    self.w2l[(u, v)] = 1
+                    self.w2l[(v, u)] = 1
                 else:
-                    self.w2l[(u,v)] += 1
+                    self.w2l[(u, v)] += 1
+                    self.w2l[(v, u)] += 1
 
-        json.dump(self.all_words,open('word_mapping','wb'))
-        json.dump(self.all_labels,open('label_mapping','wb'))
-        json.dump(self.all_documents,open('document_mapping','wb'))
+        json.dump(self.all_words, open('word_mapping.json', 'wb'))
+        json.dump(self.all_labels, open('label_mapping.json', 'wb'))
+        json.dump(self.all_documents, open('document_mapping.json', 'wb'))
+
+if __name__ == "__main__":
+    graph = gen_graphs()
+    graph.contruct_graphs("graph")
+    print graph.w2w
