@@ -30,6 +30,9 @@ class gen_graphs(object):
         self.all_words = {}
         self.all_labels = {}
         self.all_documents = {}
+        self.nvertex = 0
+        self.ndocs = 0
+        self.nlabels = 0
         nltk.data.path.append(path)
 
     def contruct_graphs(self, args):
@@ -48,15 +51,18 @@ class gen_graphs(object):
                 if word not in self.all_words:
                     self.all_words[word] = unique_count
                     unique_count = unique_count + 1
+        self.nvertex = unique_count
         unique_count = 0
         for category in movie_reviews.categories():
             self.all_labels[category] = unique_count
             unique_count = unique_count + 1
+        self.nlabels = unique_count
         unique_count = 0
         for category in movie_reviews.categories():
             for fileid in movie_reviews.fileids(category):
                 self.all_documents[fileid] = unique_count
                 unique_count = unique_count + 1
+        self.ndocs = unique_count
         print unique_count
 
         window_size = 10
