@@ -80,67 +80,104 @@ class PTE(object):
         return self.train_ww(indm, indc, indr, weight)
 
 
-    #########################################################################################################
-    #                       TO-DO : First check with ww model and than check wd model
-    ########################################################################################################
-
-
     def wd_model(self):
         '''
         Performs SGD update (pre-training on wd graph).
         '''
         self.D  = theano.shared(self.d, borrow=True)
-        grad_hist = np.ones_like(self.W)
-        grad_hist1 = np.ones_like(self.W1)
-
-        hist_W = theano.shared(grad_hist, borrow=True)
+        grad_hist = np.ones_like(self.D)
+        grad_hist1 = np.ones_like(self.W)
+        grad_hist2 = np.ones_like(self.W1)
+        hist_D = theano.shared(grad_hist, borrow=True)
         hist_W1 = theano.shared(grad_hist1, borrow=True)
-        hist_temp = hist_W1
-
+        hist_W2 = theano.shared(grad_hist2, borrow=True)
         indm = T.iscalar()
         indc = T.iscalar()
         indr = T.ivector()
-        w = W[indm, :]
-        w1 = W1[indc, :]
-        wr_ww = W1[indr, :]
-        cost_ww = T.nnet.sigmoid(T.dot(w, w1))
-        cost_ww += T.sum(T.nnet.sigmoid(T.sum(w * wr_ww, axis=1)))
-        cost = weight * T.log(cost_ww) 
-        grad_ww = T.grad(cost, [w, w1, wr_ww])
+        weight = T.iscalar()
+        d = self.D[indm, :]
+        w = self.W[indc, :]
+        #####################################################################################################
+        #                           TO-DO : Sample random words from W?
+        #####################################################################################################
+        wr_wd = self.W1[indr, :]
+        cost_wd = T.nnet.sigmoid(T.dot(d, w))
+        cost_wd += T.sum(T.nnet.sigmoid(T.sum( -1.0 * d * wr_wd, axis=1)))
+        cost = weight * T.log(cost_wd) 
+        grad_wd = T.grad(cost, [d, w, wr_wd])
 
-        updates1 = [(hist_W, T.inc_subtensor(hist_W[indm, :], grad_ww[0] ** 2))]
-        hist_temp = T.set_subtensor(hist_temp[indc, :], hist_temp[indc, :] + grad_ww[1] ** 2)
-        hist_temp = T.set_subtensor(hist_temp[indr, :], hist_temp[indr, :] + grad_ww[2] ** 2)
-        updates2 = [(W1, hist_temp)]
+        updates1 = [(hist_D, T.inc_subtensor(hist_D[indm, :], grad_wd[0] ** 2))]
+        updates2 = [(hist_W1, T.inc_subtensor(hist_W1[indc, :], grad_wd[1] ** 2))]
+        updates3 = [(hist_W2, T.inc_subtensor(hist_W2[indr, :], grad_wd[2] ** 2))]
 
-        updates3 = [
-            (self.W, T.inc_subtensor(self.W[indm, :], - (lr / T.sqrt(hist_W[ind,:])) * grad_ww[0]))]
-        temp_W = T.set_subtensor(temp_W[indc, :], temp_W[indc, :] - (lr / T.sqrt(hist_W1[indc, :]) ) * grad_ww[1])
-        temp_W = T.set_subtensor(temp_W[indr, :], temp_W[indr, :] - (lr / T.sqrt(hist_W1[indr, :]) ) * grad_ww[2])
-        updates4 = [(W1, temp_W)]
-        updates = updates1 + updates2 + updates3 + updates4
-        self.train_ww = theano.function(inputs=[indm, indc, indr, weight], outputs=cost, updates=updates)
+        updates4 = [
+            (self.D, T.inc_subtensor(self.D[indm, :], - (lr / T.sqrt(hist_D[ind,:])) * grad_wd[0]))]
+        updates5 = [
+            (self.W, T.inc_subtensor(self.W[indc, :], - (lr / T.sqrt(hist_W1[indc, :])) * grad_wd[1]))]
+        updates6 = [
+            (self.W1, T.inc_subtensor(self.W1[indr, :], - (lr / T.sqrt(hist_W2[indr, :])) * grad_wd[2]))]
+        updates = updates1 + updates2 + updates3 + updates4 + updates5 + updates6
+        self.train_wd = theano.function(inputs=[indm, indc, indr, weight], outputs=cost, updates=updates)
         
-   
     def pretraining_wd(self, indm, ind_doc, indr_doc):
         '''
         SGD update (pre-training on wd graph).
         '''
-        return self.fun_wd(self, indm, ind_doc, indr_doc)
+        return self.train_wd(self, indm, ind_doc, indr_doc)
+
+
+    def wl_model(self):
+        '''
+        Performs SGD update (pre-training on wl graph).
+        '''
+        self.L  = theano.shared(self.l, borrow=True)
+        grad_hist = np.ones_like(self.L)
+        grad_hist1 = np.ones_like(self.W)
+        grad_hist2 = np.ones_like(self.W1)
+        hist_L = theano.shared(grad_hist, borrow=True)
+        hist_W1 = theano.shared(grad_hist1, borrow=True)
+        hist_W2 = theano.shared(grad_hist2, borrow=True)
+        indm = T.iscalar()
+        indc = T.iscalar()
+        indr = T.ivector()
+        weight = T.iscalar()
+        l = self.L[indm, :]
+        w = self.W[indc, :]
+        #####################################################################################################
+        #                           TO-DO : Sample random words from W?
+        #####################################################################################################
+        wr_wd = self.W1[indr, :]
+        cost_wl = T.nnet.sigmoid(T.dot(l, w))
+        cost_wl += T.sum(T.nnet.sigmoid(T.sum( -1.0 * l * wr_wd, axis=1)))
+        cost = weight * T.log(cost_wl) 
+        grad_wl = T.grad(cost, [l, w, wr_wd])
+
+        updates1 = [(hist_L, T.inc_subtensor(hist_L[indm, :], grad_wl[0] ** 2))]
+        updates2 = [(hist_W1, T.inc_subtensor(hist_W1[indc, :], grad_wl[1] ** 2))]
+        updates3 = [(hist_W2, T.inc_subtensor(hist_W2[indr, :], grad_wl[2] ** 2))]
+
+        updates4 = [
+            (self.D, T.inc_subtensor(self.L[indm, :], - (lr / T.sqrt(hist_L[indm,:])) * grad_wd[0]))]
+        updates5 = [
+            (self.W, T.inc_subtensor(self.W[indc, :], - (lr / T.sqrt(hist_W1[indc, :])) * grad_wd[1]))]
+        updates6 = [
+            (self.W1, T.inc_subtensor(self.W1[indr, :], - (lr / T.sqrt(hist_W2[indr, :])) * grad_wd[2]))]
+        updates = updates1 + updates2 + updates3 + updates4 + updates5 + updates6
+        self.train_wl = theano.function(inputs=[indm, indc, indr, weight], outputs=cost, updates=updates)
 
     def finetuning(self, indm, indl, indr_wl):
         '''
         SGD update (finetuning on wl graph using w embeddings)
         '''
-        return self.fun_wl(self, indm, indl, indr_wl)
+        return self.train_wl(self, indm, indl, indr_wl)
 
     def save_model(self):
         '''
         Save embedding matrices on disk
         '''
         W = self.W.get_value() + self.W1.get_value()
-        #D = self.D.get_value()  # + self.W1.get_value()
-        #L = self.L.get_value()  # + self.W1.get_value()
+        D = self.D.get_value()  # + self.W1.get_value()
+        L = self.L.get_value()  # + self.W1.get_value()
         np.save('lookupW', W)
-        #np.save('lookupD', D)
-        #np.save('lookupL', L)
+        np.save('lookupD', D)
+        np.save('lookupL', L)
