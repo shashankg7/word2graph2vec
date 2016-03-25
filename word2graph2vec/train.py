@@ -5,6 +5,7 @@ import numpy as np
 import scipy
 from data_handler import gen_graphs
 from pte_theano import PTE
+import logging
 
 
 class train_pte(object):
@@ -27,49 +28,94 @@ class train_pte(object):
         self.lr = 0.04
         self.window_size = 10
         self.k = 5
-        self.nepochs = 2
+        self.nepochs = 1
 
     def train(self):
         '''
         run training (first pre-training and than fine tuning on graph with
         parameters defined in constructor.
         '''
-        # Generate nnz from graphs
+        # setting up logger
+        logger = logging.getLogger("graph2vec")
+        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler("word2graph2vec.log")
+        formatter = logging.Formatter('%(asctime)s %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+        logger.info("Setting up the model")
         E = len(self.graphs.w2w)
         V = self.graphs.nvertex
+        D = self.graphs.ndocs
+        L = self.graphs.nlabels
+        d = len(self.graphs.w2d)
+        l = len(self.graphs.w2l)
         pte = PTE(V, self.ndims, self.graphs.ndocs, self.graphs.nlabels)
         pte.ww_model()
+        pte.wd_model()
+        pte.wl_model()
         nnz_ww = np.zeros((len(self.graphs.w2w), 3), dtype=np.int32)
         nnz_wd = np.zeros((len(self.graphs.w2d), 3), dtype=np.int32)
         nnz_wl = np.zeros((len(self.graphs.w2l), 3), dtype=np.int32)
-        nnz_ww[:, 0] = map(lambda x:x[0], self.graphs.w2w.keys())
-        nnz_ww[:, 1] = map(lambda x:x[1], self.graphs.w2w.keys())
+        nnz_ww[:, 0] = map(lambda x: x[0], self.graphs.w2w.keys())
+        nnz_ww[:, 1] = map(lambda x: x[1], self.graphs.w2w.keys())
         nnz_ww[:, 2] = self.graphs.w2w.values()
-        nnz_wd[:, 0] = map(lambda x:x[0], self.graphs.w2d.keys())
-        nnz_wd[:, 1] = map(lambda x:x[1], self.graphs.w2d.keys())
+        nnz_wd[:, 0] = map(lambda x: x[0], self.graphs.w2d.keys())
+        nnz_wd[:, 1] = map(lambda x: x[1], self.graphs.w2d.keys())
         nnz_wd[:, 2] = self.graphs.w2d.values()
-        nnz_wl[:, 0] = map(lambda x:x[0], self.graphs.w2l.keys())
-        nnz_wl[:, 1] = map(lambda x:x[1], self.graphs.w2l.keys())
+        nnz_wl[:, 0] = map(lambda x: x[0], self.graphs.w2l.keys())
+        nnz_wl[:, 1] = map(lambda x: x[1], self.graphs.w2l.keys())
         nnz_wl[:, 2] = self.graphs.w2l.values()
-
+        logger.info("Training started")
         for epoch in xrange(0, self.nepochs):
             # Pre-training
             np.random.shuffle(self.nnz_ww)
             np.random.shuffle(self.nnz_wd)
+            np.random.shuffle(self.nnz_wl)
             c = 0
-            for i in xrange(0, E):
-                indm = nnz_ww[i, 0]
-                indc = nnz_ww[i, 1]
-                indr = np.asarray(np.random.randint(V, size=self.k), dtype=np.int32)
-                if i % 5000 == 0:
-                    print "cost is %f" % c
-                    c = 0
-                cost = pte.pretraining_ww(indm, indc, indr, nnz_ww[i, 2])
-                c += cost
-        print "training done, saving model"
+            try:
+                # Pre-training on word 2 word model.
+                for i in xrange(0, E):
+                    indm = nnz_ww[i, 0]
+                    indc = nnz_ww[i, 1]
+                    indr = np.asarray(
+                        np.random.randint(V, size=self.k), dtype=np.int32)
+                    if i % 5000 == 0:
+                        logger.info("cost is %f" % c)
+                        c = 0
+                    cost = pte.pretraining_ww(indm, indc, indr, nnz_ww[i, 2])
+                    c += cost
+                # Pre-training on word-doc graph
+                logger.info("Pre-training on word-word graph done")
+                for i in xrange(0, d):
+                    indw = nnz_wd[i, 0]
+                    indd = nnz_wd[i, 1]
+                    indr = np.asarray(
+                        np.random.randint(V, size=self.k), dtype=np.int32)
+                    if i % 5000 == 0:
+                        logger.info("cost is %f" % c)
+                        c = 0
+                    cost = pte.pretraining_wd(indw, indd, indr, nnz_wd[i, 2])
+                    c += cost
+                # Fine-tuning on word-label graph
+                logger.info("Pre-training on word-doc done")
+                for i in xrange(0, l):
+                    indw = nnz_wl[i, 0]
+                    indl = nnz_wl[i, 1]
+                    indr = np.asarray(
+                        np.random.randint(V, size=self.k), dtype=np.int32)
+                    if i % 5000 == 0:
+                        logger.info("cost is %f" % c)
+                        c = 0
+                    cost = pte.finetuning(indw, indl, indr, nnz_wl[i, 2])
+                    c += cost
+            except Exception as e:
+                logger.exception("Following exception occured %s"%e)
+            logger.info("Pre-training on word-label done")
+        logger.info("training done, saving model")
         pte.save_model()
 
-            
 if __name__ == "__main__":
     pte = train_pte()
     pte.train()
