@@ -63,7 +63,6 @@ class gen_graphs(object):
                 self.all_documents[fileid] = unique_count
                 unique_count = unique_count + 1
         self.ndocs = unique_count
-        print unique_count
 
         window_size = 10
 
@@ -98,22 +97,18 @@ class gen_graphs(object):
                     else:
                         self.w2w[(u, v)] += 1
                         self.w2w[(v, u)] += 1
-                u = self.all_documents[documents[index][2]]
-                v = self.all_words[word]
+                v = self.all_documents[documents[index][2]]
+                u = self.all_words[word]
                 if (u, v) not in self.w2d:
                     self.w2d[(u, v)] = 1
-                    self.w2d[(v, u)] = 1
                 else:
                     self.w2d[(u, v)] += 1
-                    self.w2d[(v, u)] += 1
 
-                u = self.all_labels[documents[index][1]]
+                v = self.all_labels[documents[index][1]]
                 if (u, v) not in self.w2l:
                     self.w2l[(u, v)] = 1
-                    self.w2l[(v, u)] = 1
                 else:
                     self.w2l[(u, v)] += 1
-                    self.w2l[(v, u)] += 1
 
         json.dump(self.all_words, open('word_mapping.json', 'wb'))
         json.dump(self.all_labels, open('label_mapping.json', 'wb'))
