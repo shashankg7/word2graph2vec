@@ -24,7 +24,7 @@ class test_pte(object):
 		nltk.data.path.append(path)
 		self.all_words = json.load(open('word_mapping.json'))
 		self.word_embedding = np.load('lookupW.npy')
-		self.D = 100
+		self.D = 40
 
 	def load_data(self):
 		documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation), category, fileid) for category in movie_reviews.categories() for fileid in movie_reviews.fileids(category)]
@@ -65,7 +65,7 @@ class test_pte(object):
 				correct = correct + 1
 		accuracy = (correct*100)/len(self.test_predicted_labels)
 		print 'Accuracy : ',accuracy
-        
+
 
 if __name__ == "__main__":
     pte = test_pte()

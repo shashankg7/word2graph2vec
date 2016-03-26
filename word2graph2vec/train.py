@@ -24,7 +24,7 @@ class train_pte(object):
         self.nnz_ww = []
         self.nnz_wd = []
         self.nnz_wl = []
-        self.ndims = 100
+        self.ndims = 40
         self.lr = 0.04
         self.window_size = 10
         self.k = 5
@@ -85,7 +85,8 @@ class train_pte(object):
                         logger.info("cost is %f" % c)
                         c = 0
                     cost = pte.pretraining_ww(indm, indc, indr, nnz_ww[i, 2])
-                    c += cost
+                    print cost[0], cost[1]
+                    c += cost[0]
                 # Pre-training on word-doc graph
                 logger.info("Pre-training on word-word graph done")
                 for i in xrange(0, d):

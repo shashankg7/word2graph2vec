@@ -35,7 +35,7 @@ class PTE(object):
         self.lr = lr
         # Indices of main node, context node, k ww samples, doc node,k wd
         # samples, label node, k wl samples respectively
-        
+
     def ww_model(self):
         '''
         Performs SGD update (pre-training on ww graph).
@@ -59,26 +59,26 @@ class PTE(object):
         wr_ww = self.W1[indr, :]
         cost_ww = T.log(T.nnet.sigmoid(T.dot(w, w1)))
         cost_ww += T.sum(T.log(T.nnet.sigmoid(T.sum(-1 * w * wr_ww, axis=1))))
-        cost =  weight * cost_ww
+        cost =  weight * T.log(-cost_ww)
         grad_ww = T.grad(cost, [w, w1, wr_ww])
         # Gradient clipping
        # grad_ww[0] = T.clip(grad_ww[0], -0.1, 0.1)
        # grad_ww[1] = T.clip(grad_ww[1], -0.1, 0.1)
        # grad_ww[2] =T.clip(grad_ww[2], -0.1, 0.1)
 
-        updates1 = [(hist_W, T.inc_subtensor(hist_W[indm, :],grad_ww[0] ** 2))]
-        hist_temp = T.set_subtensor(hist_temp[indc, :], hist_temp[indc, :] + grad_ww[1] ** 2)
-        hist_temp = T.set_subtensor(hist_temp[indr, :], hist_temp[indr, :] + grad_ww[2] ** 2)
-        updates2 = [(hist_W1, hist_temp)]
+        #updates1 = [(hist_W, T.inc_subtensor(hist_W[indm, :],grad_ww[0] ** 2))]
+        #hist_temp = T.set_subtensor(hist_temp[indc, :], hist_temp[indc, :] + grad_ww[1] ** 2)
+        #hist_temp = T.set_subtensor(hist_temp[indr, :], hist_temp[indr, :] + grad_ww[2] ** 2)
+        #updates2 = [(hist_W1, hist_temp)]
 
         updates3 = [
-            (self.W, T.inc_subtensor(self.W[indm, :], - (self.lr / T.sqrt(hist_W[indm,:])) * grad_ww[0]))]
-        self.temp_W = T.set_subtensor(self.temp_W[indc, :], self.temp_W[indc, :] - (self.lr / T.sqrt(hist_W1[indc, :]) ) * grad_ww[1])
-        self.temp_W = T.set_subtensor(self.temp_W[indr, :], self.temp_W[indr, :] - (self.lr / T.sqrt(hist_W1[indr, :]) ) * grad_ww[2])
+            (self.W, T.inc_subtensor(self.W[indm, :], - (self.lr) * grad_ww[0]))]
+        self.temp_W = T.set_subtensor(self.temp_W[indc, :], self.temp_W[indc, :] - (self.lr  ) * grad_ww[1])
+        self.temp_W = T.set_subtensor(self.temp_W[indr, :], self.temp_W[indr, :] - (self.lr ) * grad_ww[2])
         updates4 = [(self.W1, self.temp_W)]
-        updates = updates1 + updates2 + updates3 + updates4
-        self.train_ww = theano.function(inputs=[indm, indc, indr, weight], outputs=cost, updates=updates)
-        
+        updates =  updates3 + updates4
+        self.train_ww = theano.function(inputs=[indm, indc, indr, weight], outputs=[cost, cost_ww], updates=updates)
+
     def pretraining_ww(self, indm, indc, indr, weight):
         return self.train_ww(indm, indc, indr, weight)
 
@@ -106,7 +106,7 @@ class PTE(object):
         wr_wd = self.W1[indr, :]
         cost_wd = T.log(T.nnet.sigmoid(T.dot(d, w)))
         cost_wd += T.sum(T.log((T.nnet.sigmoid(T.sum( -1.0 * d * wr_wd, axis=1)))))
-        cost = weight * cost_wd
+        cost = -1 * weight * cost_wd
         grad_wd = T.grad(cost, [d, w, wr_wd])
         #grad_wd[0] = T.clip(grad_wd[0], -0.1, 0.1)
         #grad_wd[1] = T.clip(grad_wd[1], -0.1, 0.1)
@@ -123,7 +123,7 @@ class PTE(object):
             (self.W1, T.inc_subtensor(self.W1[indr, :], - (self.lr / T.sqrt(hist_W2[indr, :])) * grad_wd[2]))]
         updates = updates1 + updates2 + updates3 + updates4 + updates5 + updates6
         self.train_wd = theano.function(inputs=[indw, indd, indr, weight], outputs=cost, updates=updates)
-        
+
     def pretraining_wd(self, indw, indd, indr, weight):
         '''
         SGD update (pre-training on wd graph).
@@ -154,7 +154,7 @@ class PTE(object):
         wr_wd = self.W1[indr, :]
         cost_wl = T.log(T.nnet.sigmoid(T.dot(l, w)))
         cost_wl += T.sum(T.log(T.nnet.sigmoid(T.sum( -1.0 * l * wr_wd, axis=1))))
-        cost = weight * cost_wl
+        cost = -1 * weight * cost_wl
         grad_wl = T.grad(cost, [l, w, wr_wd])
         #grad_wl[0] = T.clip(grad_wl[0], -0.1, 0.1)
         #grad_wl[1] = T.clip(grad_wl[1], -0.1, 0.1)
