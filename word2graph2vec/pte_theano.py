@@ -10,7 +10,7 @@ class PTE(object):
     '''
     Defines the PTE model (cost function, parameters in theano.
     '''
-    def __init__(self, nvertex, out_dim, ndocs, nlabels, lr=0.00001):
+    def __init__(self, nvertex, out_dim, ndocs, nlabels, lr=0.05):
         '''
         Parameters specs:
             nvertex : no of vertices in the graph
@@ -59,7 +59,7 @@ class PTE(object):
         wr_ww = self.W1[indr, :]
         cost_ww = T.log(T.nnet.sigmoid(T.dot(w, w1)))
         cost_ww += T.sum(T.log(T.nnet.sigmoid(T.sum(-1 * w * wr_ww, axis=1))))
-        cost =  cost_ww
+        cost = -(cost_ww)
         grad_ww = T.grad(cost, [w, w1, wr_ww])
         updates3 = [
             (self.W, T.inc_subtensor(self.W[indm, :], - (self.lr) * grad_ww[0]))]

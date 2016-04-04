@@ -44,9 +44,9 @@ class train_pte(object):
         formatter = logging.Formatter('%(asctime)s %(message)s')
         fh.setFormatter(formatter)
         logger.addHandler(fh)
-
+        p, v1, v2 = self.graphs.gen_edgeprob()
         logger.info("Setting up the model")
-        E = len(self.graphs.w2w)
+        E = self.graphs.nedge
         V = self.graphs.nvertex
         D = self.graphs.ndocs
         L = self.graphs.nlabels
@@ -56,7 +56,6 @@ class train_pte(object):
         pte.ww_model()
         pte.wd_model()
         pte.wl_model()
-        p, v1, v2 = self.graphs.gen_edgeprob()
         logger.info("Training started")
         for epoch in xrange(0, self.nepochs):
             # Pre-training

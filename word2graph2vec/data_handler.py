@@ -36,7 +36,7 @@ class gen_graphs(object):
         self.all_words = {}
         self.all_labels = {}
         self.all_documents = {}
-        self.nvertex = 0
+        self.nedge = 0
         self.ndocs = 0
         self.nlabels = 0
         nltk.data.path.append(path)
@@ -147,10 +147,9 @@ class gen_graphs(object):
                 p.append(self.w2w[k][kj])
                 v1.append(k)
                 v2.append(kj)
+                self.nedge += 1
         p = np.asarray(p, dtype=np.float64)
         p = p / float(sum(p))
-        c = np.random.choice(p.shape[0], 10, p=p)
-        print c
         return p, v1, v2
 
 if __name__ == "__main__":
