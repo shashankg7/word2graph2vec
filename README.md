@@ -4,7 +4,7 @@ Representation learning for words and Labelled Documents by jointly representing
 
 The method is based on the paper by Tang J. et. al (http://research.microsoft.com/pubs/255567/fp292-Tang.pdf). 
 
-# Current state of program
+# Current state of project
 
 Current task is sentiment analysis on IMDB dataset with two labels (sentiments - positive, negative). It constructs word-word, word-doc and word-label graph from data and trains a skip-gram based model for learning low dimensional representation of nodes in graph.
 
