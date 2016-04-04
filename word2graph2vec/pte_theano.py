@@ -59,28 +59,18 @@ class PTE(object):
         wr_ww = self.W1[indr, :]
         cost_ww = T.log(T.nnet.sigmoid(T.dot(w, w1)))
         cost_ww += T.sum(T.log(T.nnet.sigmoid(T.sum(-1 * w * wr_ww, axis=1))))
-        cost =  weight * T.log(-cost_ww)
+        cost =  cost_ww
         grad_ww = T.grad(cost, [w, w1, wr_ww])
-        # Gradient clipping
-       # grad_ww[0] = T.clip(grad_ww[0], -0.1, 0.1)
-       # grad_ww[1] = T.clip(grad_ww[1], -0.1, 0.1)
-       # grad_ww[2] =T.clip(grad_ww[2], -0.1, 0.1)
-
-        #updates1 = [(hist_W, T.inc_subtensor(hist_W[indm, :],grad_ww[0] ** 2))]
-        #hist_temp = T.set_subtensor(hist_temp[indc, :], hist_temp[indc, :] + grad_ww[1] ** 2)
-        #hist_temp = T.set_subtensor(hist_temp[indr, :], hist_temp[indr, :] + grad_ww[2] ** 2)
-        #updates2 = [(hist_W1, hist_temp)]
-
         updates3 = [
             (self.W, T.inc_subtensor(self.W[indm, :], - (self.lr) * grad_ww[0]))]
         self.temp_W = T.set_subtensor(self.temp_W[indc, :], self.temp_W[indc, :] - (self.lr  ) * grad_ww[1])
         self.temp_W = T.set_subtensor(self.temp_W[indr, :], self.temp_W[indr, :] - (self.lr ) * grad_ww[2])
         updates4 = [(self.W1, self.temp_W)]
         updates =  updates3 + updates4
-        self.train_ww = theano.function(inputs=[indm, indc, indr, weight], outputs=[cost, cost_ww], updates=updates)
+        self.train_ww = theano.function(inputs=[indm, indc, indr], outputs=cost, updates=updates)
 
-    def pretraining_ww(self, indm, indc, indr, weight):
-        return self.train_ww(indm, indc, indr, weight)
+    def pretraining_ww(self, indm, indc, indr):
+        return self.train_ww(indm, indc, indr)
 
 
     def wd_model(self):

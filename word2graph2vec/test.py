@@ -10,6 +10,7 @@ import json
 import nltk
 import random
 from sklearn import svm
+from sklearn.cross_validation import train_test_split
 path = '../data'
 
 class test_pte(object):
@@ -28,9 +29,7 @@ class test_pte(object):
 
 	def load_data(self):
 		documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation), category, fileid) for category in movie_reviews.categories() for fileid in movie_reviews.fileids(category)]
-		random.shuffle(documents)
-		train_set =  documents[0:len(documents)/2]
-		test_set =  documents[len(documents)/2:len(documents)]
+		train_set, test_set =  train_test_split(documents, test_size=0.33, random_state=42)
 		return train_set, test_set
 
 	def test(self):
@@ -63,7 +62,7 @@ class test_pte(object):
 		for i in range(len(self.test_predicted_labels)):
 			if self.test_predicted_labels[i] == self.test_actual_labels[i]:
 				correct = correct + 1
-		accuracy = (correct*100)/len(self.test_predicted_labels)
+		accuracy = (correct)/float(len(self.test_predicted_labels)) * 100.0
 		print 'Accuracy : ',accuracy
 
 

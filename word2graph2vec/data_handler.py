@@ -11,6 +11,9 @@ import sys
 import re
 import json
 import nltk
+import pdb
+import time
+import numpy as np
 path = '../data'
 
 
@@ -26,6 +29,8 @@ class gen_graphs(object):
         '''
         # word2word graph
         self.w2w = {}
+        # Store all u,v pairs
+        self.w2w_inv = []
         self.w2l = {}
         self.w2d = {}
         self.all_words = {}
@@ -86,7 +91,6 @@ class gen_graphs(object):
                     if v not in self.w2w[u]:
                         self.w2w[u][v] = 0
                     self.w2w[u][v] += 1
-
                     if v not in self.w2w:
                         self.w2w[v] = {}
                     if u not in self.w2w[v]:
@@ -126,11 +130,34 @@ class gen_graphs(object):
         json.dump(self.all_words, open('word_mapping.json', 'wb'))
         json.dump(self.all_labels, open('label_mapping.json', 'wb'))
         json.dump(self.all_documents, open('document_mapping.json', 'wb'))
-        print 'w2l',len(self.w2l.keys())
-        print 'w2d',len(self.w2d.keys())
-        print 'w2w',len(self.w2w.keys())
+        print 'w2l', len(self.w2l.keys())
+        print 'w2d', len(self.w2d.keys())
+        print 'w2w', len(self.w2w.keys())
+
+    def gen_edgeprob(self):
+        '''
+        returns edge probability vector (w2w graph)
+        '''
+        # Edge probability vector
+        p = []
+        v1 = []
+        v2 = []
+        for k in self.w2w.keys():
+            for kj in self.w2w[k].keys():
+                p.append(self.w2w[k][kj])
+                v1.append(k)
+                v2.append(kj)
+        p = np.asarray(p, dtype=np.float64)
+        p = p / float(sum(p))
+        c = np.random.choice(p.shape[0], 10, p=p)
+        print c
+        return p, v1, v2
 
 if __name__ == "__main__":
     graph = gen_graphs()
     graph.contruct_graphs("graph")
-    
+    t = time.time()
+    p = graph.gen_edgeprob()
+    t = time.time() - t
+    print sum(p)
+    print len(p), t

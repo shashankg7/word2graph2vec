@@ -26,9 +26,10 @@ class train_pte(object):
         self.nnz_wl = []
         self.ndims = 40
         self.lr = 0.04
+        self.batch_size = 100
         self.window_size = 10
         self.k = 5
-        self.nepochs = 1
+        self.nepochs = 10
 
     def train(self):
         '''
@@ -55,64 +56,51 @@ class train_pte(object):
         pte.ww_model()
         pte.wd_model()
         pte.wl_model()
-        nnz_ww = np.zeros((len(self.graphs.w2w), 3), dtype=np.int32)
-        nnz_wd = np.zeros((len(self.graphs.w2d), 3), dtype=np.int32)
-        nnz_wl = np.zeros((len(self.graphs.w2l), 3), dtype=np.int32)
-        nnz_ww[:, 0] = map(lambda x: x[0], self.graphs.w2w.keys())
-        nnz_ww[:, 1] = map(lambda x: x[1], self.graphs.w2w.keys())
-        nnz_ww[:, 2] = self.graphs.w2w.values()
-        nnz_wd[:, 0] = map(lambda x: x[0], self.graphs.w2d.keys())
-        nnz_wd[:, 1] = map(lambda x: x[1], self.graphs.w2d.keys())
-        nnz_wd[:, 2] = self.graphs.w2d.values()
-        nnz_wl[:, 0] = map(lambda x: x[0], self.graphs.w2l.keys())
-        nnz_wl[:, 1] = map(lambda x: x[1], self.graphs.w2l.keys())
-        nnz_wl[:, 2] = self.graphs.w2l.values()
+        p, v1, v2 = self.graphs.gen_edgeprob()
         logger.info("Training started")
         for epoch in xrange(0, self.nepochs):
             # Pre-training
-            np.random.shuffle(self.nnz_ww)
-            np.random.shuffle(self.nnz_wd)
-            np.random.shuffle(self.nnz_wl)
+            np.random.shuffle(p)
             c = 0
             try:
                 # Pre-training on word 2 word model.
-                for i in xrange(0, E):
-                    indm = nnz_ww[i, 0]
-                    indc = nnz_ww[i, 1]
-                    indr = np.asarray(
-                        np.random.randint(V, size=self.k), dtype=np.int32)
-                    if i % 5000 == 0:
-                        logger.info("cost is %f" % c)
-                        c = 0
-                    cost = pte.pretraining_ww(indm, indc, indr, nnz_ww[i, 2])
-                    print cost[0], cost[1]
-                    c += cost[0]
+                for i in xrange(0, E, self.batch_size):
+                    sample = np.random.choice(p.shape[0], self.batch_size, p=p)
+                    c = 0
+                    for j in xrange(0, sample.shape[0]):
+                        indm = v1[sample[j]]
+                        indc = v2[sample[j]]
+                        indr = np.asarray(
+                            np.random.randint(V, size=self.k), dtype=np.int32)
+                        cost = pte.pretraining_ww(indm, indc, indr)
+                        c += cost
+                    logger.info("Cost after training one sample (batch) is %f" % c)
                 # Pre-training on word-doc graph
                 logger.info("Pre-training on word-word graph done")
-                for i in xrange(0, d):
-                    indw = nnz_wd[i, 0]
-                    indd = nnz_wd[i, 1]
-                    indr = np.asarray(
-                        np.random.randint(V, size=self.k), dtype=np.int32)
-                    if i % 5000 == 0:
-                        logger.info("cost is %f" % c)
-                        c = 0
-                    cost = pte.pretraining_wd(indw, indd, indr, nnz_wd[i, 2])
-                    c += cost
+                #for i in xrange(0, d):
+                #    indw = nnz_wd[i, 0]
+                #    indd = nnz_wd[i, 1]
+                #    indr = np.asarray(
+                #        np.random.randint(V, size=self.k), dtype=np.int32)
+                #    if i % 5000 == 0:
+                #        logger.info("cost is %f" % c)
+                #        c = 0
+                #    cost = pte.pretraining_wd(indw, indd, indr, nnz_wd[i, 2])
+                #    c += cost
                 # Fine-tuning on word-label graph
-                logger.info("Pre-training on word-doc done")
-                for i in xrange(0, l):
-                    indw = nnz_wl[i, 0]
-                    indl = nnz_wl[i, 1]
-                    indr = np.asarray(
-                        np.random.randint(V, size=self.k), dtype=np.int32)
-                    if i % 5000 == 0:
-                        logger.info("cost is %f" % c)
-                        c = 0
-                    cost = pte.finetuning(indw, indl, indr, nnz_wl[i, 2])
-                    c += cost
+                #logger.info("Pre-training on word-doc done")
+                #for i in xrange(0, l):
+                #    indw = nnz_wl[i, 0]
+                #    indl = nnz_wl[i, 1]
+                #    indr = np.asarray(
+                #        np.random.randint(V, size=self.k), dtype=np.int32)
+                #    if i % 5000 == 0:
+                #        logger.info("cost is %f" % c)
+                #        c = 0
+                #    cost = pte.finetuning(indw, indl, indr, nnz_wl[i, 2])
+                #    c += cost
             except Exception as e:
-                logger.exception("Following exception occured %s"%e)
+                logger.exception("Following exception occured %s" % e)
             logger.info("Pre-training on word-label done")
         logger.info("training done, saving model")
         pte.save_model()
