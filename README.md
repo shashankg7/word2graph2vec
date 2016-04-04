@@ -14,3 +14,7 @@ Currently it trains model only on word-word graph. Training jointly on all three
 
 Current implementaion has quite poor results. It gives ~55% accuracy on test.
 
+# State - Development
+
+The project is still in development state. We will change the state of the project to alpha when it gives decent performance of dataset
+
