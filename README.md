@@ -18,3 +18,9 @@ Current implementaion has quite poor results. It gives ~55% accuracy on test.
 
 The project is still in development state. We will change the state of the project to alpha when it gives decent performance of dataset
 
+# Authors
+
+For any queries related to project you can contact the authors:
+
+Shashank Gupta - 27392shashankgupta@gmail.com
+Karan Chandnani - karanchandnani21@gmail.com
