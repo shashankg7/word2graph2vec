@@ -25,11 +25,11 @@ class train_pte(object):
         self.nnz_wd = []
         self.nnz_wl = []
         self.ndims = 40
-        self.lr = 0.04
+        self.lr = 0.05
         self.batch_size = 100
         self.window_size = 10
         self.k = 5
-        self.nepochs = 10
+        self.nepochs = 1
 
     def train(self):
         '''
