@@ -46,9 +46,26 @@ class gen_graphs(object):
         Function to read text file from path and construct the corresponding
         graphs.
         '''
-        documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation), category, fileid)
-                     for category in movie_reviews.categories()
-                     for fileid in movie_reviews.fileids(category)]
+        # documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation), category, fileid)
+        #              for category in movie_reviews.categories()
+        #              for fileid in movie_reviews.fileids(category)]
+
+        documents = []
+        files = ['../data/train-pos.txt','../data/train-neg.txt','../data/test-pos.txt','../data/test-neg.txt']
+        class_labels = ['pos','neg','pos','neg']
+        document_no = 1
+        index = 0
+        for file_name in files:
+            fp = open(file_name)
+            lines = fp.readlines()
+            for line in lines:
+                words = line.split(" ")
+                document = (words,class_labels[index],document_no)
+                documents.append(document)
+                document_no += 1
+            index += 1
+
+        print documents[0]
 
         unique_count = 0
         for index in range(len(documents)):
@@ -59,17 +76,16 @@ class gen_graphs(object):
                     unique_count = unique_count + 1
         self.nvertex = unique_count
         unique_count = 0
-        for category in movie_reviews.categories():
-            self.all_labels[category] = unique_count
-            unique_count = unique_count + 1
+        for c in class_labels:
+            if c not in self.all_labels:
+                self.all_labels[c] = unique_count
+                unique_count = unique_count + 1
         self.nlabels = unique_count
         unique_count = 0
-        for category in movie_reviews.categories():
-            for fileid in movie_reviews.fileids(category):
-                self.all_documents[fileid] = unique_count
-                unique_count = unique_count + 1
+        for i in xrange(1,document_no):
+            self.all_documents[i] = unique_count
+            unique_count = unique_count + 1
         self.ndocs = unique_count
-
         window_size = 10
         for index in range(len(documents)):
             for word_index in range(len(documents[index][0])):
@@ -155,8 +171,8 @@ class gen_graphs(object):
 if __name__ == "__main__":
     graph = gen_graphs()
     graph.contruct_graphs("graph")
-    t = time.time()
-    p = graph.gen_edgeprob()
-    t = time.time() - t
-    print sum(p)
-    print len(p), t
+    #t = time.time()
+    #p = graph.gen_edgeprob()
+    #t = time.time() - t
+    #print sum(p)
+    #print len(p), t

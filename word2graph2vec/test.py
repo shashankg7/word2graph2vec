@@ -28,8 +28,34 @@ class test_pte(object):
 		self.D = 40
 
 	def load_data(self):
-		documents = [(list(w.lower() for w in movie_reviews.words(fileid) if w.lower() not in string.punctuation), category, fileid) for category in movie_reviews.categories() for fileid in movie_reviews.fileids(category)]
-		train_set, test_set =  train_test_split(documents, test_size=0.33, random_state=42)
+		train_set = []
+		test_set = []
+		document_no = 1
+		files = ['../data/train-pos.txt','../data/train-neg.txt']
+		class_labels = ['pos','neg']
+		index = 0
+		for file_name in files:
+		    fp = open(file_name)
+		    lines = fp.readlines()
+		    for line in lines:
+		        words = line.split(" ")
+		        document = (words,class_labels[index],document_no)
+		        train_set.append(document)
+		        document_no += 1
+		    index += 1
+
+		files = ['../data/test-pos.txt','../data/test-neg.txt']
+		class_labels = ['pos','neg']
+		index = 0
+		for file_name in files:
+		    fp = open(file_name)
+		    lines = fp.readlines()
+		    for line in lines:
+		        words = line.split(" ")
+		        document = (words,class_labels[index],document_no)
+		        test_set.append(document)
+		        document_no += 1
+		    index += 1
 		return train_set, test_set
 
 	def test(self):
