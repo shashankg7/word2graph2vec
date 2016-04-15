@@ -23,5 +23,7 @@ The project is still in development state. We will change the state of the proje
 For any queries related to project you can contact the authors:
 
 Shashank Gupta - 27392shashankgupta@gmail.com
+
 Karan Chandnani - karanchandnani21@gmail.com
+
 Nishant Prateek - nishant.prateek@research.iiit.ac.in
