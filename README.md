@@ -24,3 +24,4 @@ For any queries related to project you can contact the authors:
 
 Shashank Gupta - 27392shashankgupta@gmail.com
 Karan Chandnani - karanchandnani21@gmail.com
+Nishant Prateek - nishant.prateek@research.iiit.ac.in
